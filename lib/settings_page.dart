@@ -371,6 +371,19 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           Tooltip(
+            message: 'Show favourites charts',
+            child: ListTile(
+              title:
+                  const Text('Show charts for favourites instead of portfolio'),
+              leading: const Icon(Icons.wallet),
+              onTap: () => settings.setShowFavCharts(!settings.showFavCharts),
+              trailing: Switch(
+                value: settings.showFavCharts,
+                onChanged: (value) => settings.setShowFavCharts(value),
+              ),
+            ),
+          ),
+          Tooltip(
             message: 'Use wavy curves in the graphs page',
             child: ListTile(
               title: const Text('Curve line graphs'),

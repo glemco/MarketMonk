@@ -60,6 +60,7 @@ class SettingsState extends ChangeNotifier {
   String displayCurrency = 'USD';
   List<String> visibleCurrencies = ['USD'];
   bool showMarketClosed = false;
+  bool showFavCharts = false;
   bool pureBlack = false;
 
   SettingsState({bool autoInit = true}) {
@@ -116,6 +117,7 @@ class SettingsState extends ChangeNotifier {
         : _defaultVisibleCurrencies();
 
     showMarketClosed = prefs.getBool('showMarketClosed') ?? false;
+    showFavCharts = prefs.getBool('showFavCharts') ?? false;
     pureBlack = prefs.getBool('pureBlack') ?? false;
 
     displayCurrency =
@@ -190,6 +192,13 @@ class SettingsState extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     prefs.setBool('showMarketClosed', value);
+  }
+
+  void setShowFavCharts(bool value) async {
+    showFavCharts = value;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool('showFavCharts', value);
   }
 
   void setCurveSmoothness(double value) async {

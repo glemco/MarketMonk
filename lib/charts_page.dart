@@ -774,6 +774,8 @@ class ChartsPageState extends State<ChartsPage>
           ],
           if (_mode == _ChartMode.stock)
             ..._buildStockContent(settings)
+          else if (settings.showFavCharts)
+            ..._buildFavoriteStockCharts(settings)
           else
             ..._buildPortfolioContent(settings, accountColors),
         ],
@@ -948,6 +950,105 @@ class ChartsPageState extends State<ChartsPage>
         ],
       ),
     );
+  }
+
+  List<Widget> _buildFavoriteStockCharts(SettingsState settings) {
+    return [
+      for (final symbol in _favoriteStocks)
+        _buildFavoriteStockChart(symbol, settings)
+    ];
+  }
+
+  Widget _buildFavoriteStockChart(
+    String symbol,
+    SettingsState settings,
+  ) {
+    _setStockStream(symbol);
+    Stream<List<CandleTicker>>? _currStream = _stockStream;
+    return StreamBuilder(
+        stream: _currStream,
+        builder: (context, snapshot) =>
+            _buildStockChartSmall(symbol, context, snapshot, settings));
+  }
+
+  Widget _buildStockChartSmall(
+    String symbol,
+    BuildContext context,
+    AsyncSnapshot<List<CandleTicker>> snapshot,
+    SettingsState settings,
+  ) {
+    final height = MediaQuery.of(context).size.height * 0.15;
+    if (snapshot.hasError) {
+      return SizedBox(
+        height: height,
+        child: Center(child: Text(snapshot.error.toString())),
+      );
+    }
+    if (snapshot.data == null || snapshot.data!.isEmpty) {
+      if (_stockError != null) {
+        return SizedBox(
+          height: height,
+          child: Center(child: Text(_stockError!)),
+        );
+      }
+      return SizedBox(
+        height: height,
+        child: const Center(),
+      );
+    }
+
+    final candles = snapshot.data!.map((tc) => tc.candle).toList();
+    final spots = <FlSpot>[
+      for (var i = 0; i < candles.length; i++)
+        FlSpot(i.toDouble(), candles[i].close.value / _centDivisor),
+    ];
+
+    final pct = safePercentChange(
+      candles.first.close.value,
+      candles.last.close.value,
+    );
+    final color = pct >= 0 ? Colors.green : Colors.redAccent;
+    final chart = SizedBox(
+      height: height,
+      child: TickerLine(
+        dates: candles.map((c) => c.date.value),
+        spots: spots,
+        nativeCurrency: _nativeCurrency,
+      ),
+    );
+    return GestureDetector(
+        onTap: () => _selectFavorite(symbol),
+        child: Row(
+          children: [
+            Expanded(
+              child: chart,
+            ),
+            SizedBox(
+              width: 120,
+              child: Column(children: [
+                Text(
+                  symbol,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      pct >= 0 ? Icons.arrow_upward : Icons.arrow_downward,
+                      color: color,
+                    ),
+                    Text(
+                      '${pct >= 0 ? '+' : ''}${pct.toStringAsFixed(2)}%',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyLarge!.copyWith(color: color),
+                    ),
+                  ],
+                ),
+              ]),
+            ),
+          ],
+        ));
   }
 
   List<Widget> _buildPortfolioContent(
